@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Сладкие сны — бронирование гостиницы</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Roboto, sans-serif; }
+  body { background:#f5f7fb; min-height:100vh; display:flex; flex-direction:column; color:#1e2a3a; }
+  .container { max-width:1200px; margin:0 auto; padding:0 20px; }
+  .header { background:#fff; box-shadow:0 4px 12px rgba(0,0,0,.05); padding:18px 0; margin-bottom:32px; }
+  .header .container { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; }
+  .logo { font-size:24px; font-weight:700; color:#2d4b6e; }
+  .logo i { color:#ffb347; margin-right:8px; }
+  .nav-buttons { display:flex; gap:12px; flex-wrap:wrap; }
+  .btn { padding:10px 20px; border-radius:30px; border:none; font-weight:600; cursor:pointer; transition:.2s; display:inline-flex; align-items:center; gap:8px; background:#eef2f7; color:#1e2a3a; font-size:14px; }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .btn-primary { background:#2d4b6e; color:#fff; }
+  .btn-primary:hover:not(:disabled) { background:#1e3a55; }
+  .btn-outline { background:transparent; border:1.5px solid #2d4b6e; color:#2d4b6e; }
+  .btn-outline:hover:not(:disabled) { background:rgba(45,75,110,.08); }
+  .btn-danger { background:#e53935; color:#fff; }
+  .btn-danger:hover:not(:disabled) { background:#b71c1c; }
+  .btn-sm { padding:6px 14px; font-size:13px; }
+  .card { background:#fff; border-radius:24px; padding:24px 28px; box-shadow:0 8px 24px rgba(0,0,0,.04); margin-bottom:28px; }
+  h2 { font-size:24px; margin-bottom:20px; font-weight:600; display:flex; align-items:center; gap:10px; }
+  .form-group { margin-bottom:18px; }
+  label { display:block; font-size:14px; font-weight:500; margin-bottom:6px; color:#4a5f7a; }
+  input, select { width:100%; padding:12px 16px; border-radius:16px; border:1.5px solid #dbe2ea; background:#f9fbfd; font-size:15px; outline:none; transition:.2s; }
+  input:focus, select:focus { border-color:#2d4b6e; background:#fff; box-shadow:0 0 0 4px rgba(45,75,110,.06); }
+  .inline-form { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+  .inline-form .form-group { flex:1 1 180px; margin-bottom:0; }
+  .alert { padding:14px 20px; border-radius:16px; margin-bottom:20px; display:flex; align-items:center; gap:12px; font-weight:500; }
+  .alert-error { background:#ffebee; color:#b71c1c; border-left:6px solid #e53935; }
+  .alert-success { background:#e8f5e9; color:#1b5e20; border-left:6px solid #43a047; }
+  .alert-info { background:#e3f2fd; color:#0d47a1; border-left:6px solid #1976d2; }
+  .rooms-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:24px; margin-top:16px; }
+  .room-card { background:#fff; border-radius:24px; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,.05); border:1px solid #eef2f7; display:flex; flex-direction:column; }
+  .room-img { height:160px; background:#d9e2ec; display:flex; align-items:center; justify-content:center; font-size:48px; color:#8fa9c9; }
+  .room-info { padding:18px 20px 20px; flex:1; display:flex; flex-direction:column; }
+  .room-title { font-size:18px; font-weight:700; margin-bottom:6px; }
+  .room-meta { display:flex; gap:12px; font-size:13px; color:#5e7188; margin-bottom:12px; flex-wrap:wrap; }
+  .room-price { font-size:22px; font-weight:700; color:#2d4b6e; margin:8px 0 16px; }
+  .room-price small { font-size:14px; font-weight:400; color:#7b8ea3; }
+  .room-actions { margin-top:auto; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .table-wrap { overflow-x:auto; margin-top:12px; border-radius:18px; border:1px solid #e9eef4; }
+  table { width:100%; border-collapse:collapse; font-size:14px; background:#fff; }
+  th { text-align:left; padding:16px 18px; background:#f4f8fe; font-weight:600; color:#2d4b6e; white-space:nowrap; }
+  td { padding:14px 18px; border-top:1px solid #eef2f7; vertical-align:middle; }
+  .status-badge { display:inline-block; padding:4px 12px; border-radius:30px; font-size:12px; font-weight:600; }
+  .status-pending { background:#fff3e0; color:#e65100; }
+  .status-approved { background:#e8f5e9; color:#1b5e20; }
+  .status-rejected { background:#ffebee; color:#b71c1c; }
+  .actions-cell { display:flex; gap:6px; flex-wrap:wrap; }
+  .hidden { display:none !important; }
+  .footer { margin-top:auto; padding:24px 0; text-align:center; color:#8b9bb0; font-size:14px; border-top:1px solid #e9eef4; }
+  .page-section { display:none; }
+  .page-section.active { display:block; }
+  .toast-message { position:fixed; bottom:30px; right:30px; background:#1e2a3a; color:#fff; padding:14px 24px; border-radius:40px; box-shadow:0 12px 30px rgba(0,0,0,.2); font-weight:500; display:flex; align-items:center; gap:12px; z-index:9999; max-width:420px; animation:slideIn .3s ease; }
+  @keyframes slideIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; z-index:10000; padding:20px; }
+  .modal-content { background:#fff; border-radius:28px; padding:32px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; box-shadow:0 24px 60px rgba(0,0,0,.2); }
+  .date-info { font-size:13px; color:#7b8ea3; margin-top:4px; }
+  .date-info.error { color:#e53935; }
+  .date-info.ok { color:#2e7d32; }
+  .busy-dates-list { background:#fff3e0; border-left:4px solid #ffb347; padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:16px; color:#7a4a00; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="logo"><i class="fas fa-moon"></i> Сладкие сны</div>
+    <div class="nav-buttons">
+      <button class="btn btn-outline" id="navGuestBtn"><i class="fas fa-user"></i> Гость</button>
+      <button class="btn btn-outline" id="navAdminBtn"><i class="fas fa-shield-alt"></i> Панель управления</button>
+      <button class="btn btn-danger hidden" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <section id="guestSection" class="page-section active">
+    <div class="card">
+      <h2><i class="fas fa-search"></i> Поиск подходящего номера</h2>
+      <form id="searchForm" class="inline-form">
+        <div class="form-group">
+          <label>Тип номера</label>
+          <select id="searchType">
+            <option value="">Все типы</option>
+            <option value="standard">Стандарт</option>
+            <option value="comfort">Комфорт</option>
+            <option value="lux">Люкс</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Макс. цена, ₽</label>
+          <input type="number" id="searchMaxPrice" placeholder="например, 5000" min="0" step="100">
+        </div>
+        <div class="form-group">
+          <label>Гостей (минимум)</label>
+          <input type="number" id="searchCapacity" placeholder="например, 2" min="1" step="1">
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Применить</button>
+        <button type="button" class="btn btn-outline" id="resetFilterBtn"><i class="fas fa-undo"></i> Сбросить</button>
+      </form>
+    </div>
+    <div id="guestMessageArea"></div>
+    <div id="roomsContainer" class="rooms-grid"></div>
+  </section>
+
+  <section id="adminSection" class="page-section">
+    <div id="loginCard" class="card">
+      <h2><i class="fas fa-lock"></i> Вход администратора</h2>
+      <div id="loginMessageArea"></div>
+      <form id="loginForm" style="max-width:400px;">
+        <div class="form-group">
+          <label>Логин</label>
+          <input type="text" id="loginUsername" placeholder="hotel123" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label>Пароль</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-sign-in-alt"></i> Войти</button>
+      </form>
+    </div>
+
+    <div id="adminPanel" class="card hidden">
+      <h2><i class="fas fa-clipboard-list"></i> Управление заявками</h2>
+      <div id="adminMessageArea"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Номер</th><th>Гость</th><th>Даты</th><th>Статус</th><th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="bookingsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container">© 2025 Гостиница «Сладкие сны»</div>
+</footer>
+
+<div id="toastContainer"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ========== УТИЛИТЫ ==========
+  function escapeHtml(str){
+    return String(str == null ? '' : str).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+  function pad(n){ return n < 10 ? '0' + n : '' + n; }
+  function displayDate(iso){
+    if(!iso) return '—';
+    var p = iso.split('-');
+    return p[2] + '.' + p[1] + '.' + p[0];
+  }
+  function todayISO(){
+    var d = new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+  }
+
+  function showToast(msg, isError){
+    var container = document.getElementById('toastContainer');
+    var t = document.createElement('div');
+    t.className = 'toast-message';
+    if(isError) t.style.background = '#b71c1c';
+    t.innerHTML = '<i class="fas ' + (isError?'fa-exclamation-circle':'fa-check-circle') + '"></i><span>' + escapeHtml(msg) + '</span>';
+    container.appendChild(t);
+    setTimeout(function(){
+      t.style.transition = 'opacity .3s';
+      t.style.opacity = '0';
+      setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 300);
+    }, 3500);
+  }
+
+  function setMessage(areaId, text, type){
+    var area = document.getElementById(areaId);
+    if(!area) return;
+    if(!text){ area.innerHTML = ''; return; }
+    var cls = type === 'error' ? 'alert-error' : (type === 'success' ? 'alert-success' : 'alert-info');
+    var ico = type === 'error' ? 'fa-exclamation-triangle' : (type === 'success' ? 'fa-check-circle' : 'fa-info-circle');
+    area.innerHTML = '<div class="alert ' + cls + '"><i class="fas ' + ico + '"></i> ' + escapeHtml(text) + '</div>';
+  }
+
+  async function api(url, options){
+    const res = await fetch(url, options);
+    let data = null;
+    try { data = await res.json(); } catch(e) {}
+    if(!res.ok){
+      const msg = (data && (data.error || (data.errors && data.errors.join(', ')))) || ('Ошибка ' + res.status);
+      throw new Error(msg);
+    }
+    return data;
+  }
+
+  // ========== НАВИГАЦИЯ ==========
+  var guestSection = document.getElementById('guestSection');
+  var adminSection = document.getElementById('adminSection');
+  var loginCard = document.getElementById('loginCard');
+  var adminPanel = document.getElementById('adminPanel');
+  var logoutBtn = document.getElementById('logoutBtn');
+
+  var adminLoggedIn = false;
+
+  async function checkAdmin(){
+    try {
+      await api('/api/admin/me');
+      adminLoggedIn = true;
+    } catch(e) {
+      adminLoggedIn = false;
+    }
+    updateAdminUI();
+  }
+
+  function updateAdminUI(){
+    if(adminLoggedIn){
+      loginCard.classList.add('hidden');
+      adminPanel.classList.remove('hidden');
+      logoutBtn.classList.remove('hidden');
+      renderBookingsTable();
+    } else {
+      loginCard.classList.remove('hidden');
+      adminPanel.classList.add('hidden');
+      logoutBtn.classList.add('hidden');
+    }
+  }
+
+  document.getElementById('navGuestBtn').addEventListener('click', function(){
+    guestSection.classList.add('active');
+    adminSection.classList.remove('active');
+    renderRooms();
+  });
+  document.getElementById('navAdminBtn').addEventListener('click', async function(){
+    adminSection.classList.add('active');
+    guestSection.classList.remove('active');
+    await checkAdmin();
+  });
+  logoutBtn.addEventListener('click', async function(){
+    try { await api('/api/admin/logout', { method: 'POST' }); } catch(e) {}
+    adminLoggedIn = false;
+    updateAdminUI();
+    showToast('Вы вышли из панели управления');
+  });
+
+  // ========== ВХОД ==========
+  document.getElementById('loginForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var u = document.getElementById('loginUsername').value.trim();
+    var p = document.getElementById('loginPassword').value;
+    try {
+      await api('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p })
+      });
+      document.getElementById('loginUsername').value = '';
+      document.getElementById('loginPassword').value = '';
+      setMessage('loginMessageArea', '');
+      adminLoggedIn = true;
+      updateAdminUI();
+      showToast('Добро пожаловать!');
+    } catch(err) {
+      setMessage('loginMessageArea', err.message, 'error');
+    }
+  });
+
+  // ========== ГОСТЬ ==========
+  var currentFilter = { type:'', maxPrice:null, capacity:null };
+
+  async function renderRooms(){
+    var container = document.getElementById('roomsContainer');
+    container.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;color:#7b8ea3;">Загрузка...</div>';
+    var params = [];
+    if(currentFilter.type) params.push('type=' + encodeURIComponent(currentFilter.type));
+    if(currentFilter.maxPrice != null) params.push('maxPrice=' + currentFilter.maxPrice);
+    if(currentFilter.capacity != null) params.push('capacity=' + currentFilter.capacity);
+    var url = '/api/rooms' + (params.length ? '?' + params.join('&') : '');
+
+    var list;
+    try { list = await api(url); }
+    catch(err) {
+      container.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;color:#b71c1c;">Ошибка: ' + escapeHtml(err.message) + '</div>';
+      return;
+    }
+
+    if(list.length === 0){
+      container.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;color:#7b8ea3;">😕 По вашему запросу ничего не найдено.</div>';
+      return;
+    }
+
+    var html = '';
+    for(var i = 0; i < list.length; i++){
+      var room = list[i];
+      var typeRu = { standard:'Стандарт', comfort:'Комфорт', lux:'Люкс' }[room.type] || room.type;
+      html +=
+        '<div class="room-card">' +
+          '<div class="room-img"><i class="fas fa-bed"></i></div>' +
+          '<div class="room-info">' +
+            '<div class="room-title">' + escapeHtml(room.title) + '</div>' +
+            '<div class="room-meta">' +
+              '<span><i class="fas fa-users"></i> до ' + room.capacity + ' гостей</span>' +
+              '<span><i class="fas fa-tag"></i> ' + typeRu + '</span>' +
+            '</div>' +
+            '<div class="room-price">' + room.price.toLocaleString('ru-RU') + ' ₽ <small>/ ночь</small></div>' +
+            '<div class="room-actions">' +
+              '<button class="btn btn-primary btn-sm book-btn" data-room-id="' + room.id + '"><i class="fas fa-calendar-plus"></i> Забронировать</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }
+    container.innerHTML = html;
+
+    var btns = container.querySelectorAll('.book-btn');
+    for(var j = 0; j < btns.length; j++){
+      btns[j].addEventListener('click', function(){
+        openBookingDialog(parseInt(this.getAttribute('data-room-id'), 10));
+      });
+    }
+  }
+
+  // ========== МОДАЛЬНОЕ ОКНО БРОНИРОВАНИЯ ==========
+  async function openBookingDialog(roomId){
+    var room = null;
+    try {
+      var rooms = await api('/api/rooms');
+      for(var i = 0; i < rooms.length; i++){ if(rooms[i].id === roomId){ room = rooms[i]; break; } }
+    } catch(e) { showToast(e.message, true); return; }
+    if(!room) return;
+
+    var busyList = [];
+    try { busyList = await api('/api/rooms/' + roomId + '/busy'); }
+    catch(e) { showToast(e.message, true); return; }
+
+    var busyHtml = '';
+    if(busyList.length > 0){
+      var parts = busyList.sort().map(displayDate);
+      busyHtml = '<div class="busy-dates-list"><strong><i class="fas fa-ban"></i> Занятые даты:</strong><br>' + parts.join(', ') + '</div>';
+    }
+
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    var content = document.createElement('div');
+    content.className = 'modal-content';
+    content.innerHTML =
+      '<h2 style="margin-bottom:20px;"><i class="fas fa-calendar-check"></i> Бронирование</h2>' +
+      '<p style="margin-bottom:16px;color:#2d4b6e;font-weight:600;">' + escapeHtml(room.title) + ' — ' + room.price.toLocaleString('ru-RU') + ' ₽/ночь</p>' +
+      busyHtml +
+      '<form id="bookingForm">' +
+        '<div class="form-group"><label>Ваше имя *</label><input type="text" id="bGuestName" placeholder="Иван Петров"></div>' +
+        '<div class="form-group"><label>Email *</label><input type="email" id="bGuestEmail" placeholder="ivan@example.com"></div>' +
+        '<div class="form-group"><label>Дата заезда *</label><input type="date" id="bCheckIn"><div class="date-info" id="bInInfo">Не ранее сегодня</div></div>' +
+        '<div class="form-group"><label>Дата выезда *</label><input type="date" id="bCheckOut"><div class="date-info" id="bOutInfo">Позже даты заезда</div></div>' +
+        '<div id="bErrorArea"></div>' +
+        '<div style="display:flex;gap:12px;margin-top:24px;">' +
+          '<button type="submit" class="btn btn-primary" style="flex:1;">Отправить заявку</button>' +
+          '<button type="button" class="btn btn-outline" id="bCancel" style="flex:1;">Отмена</button>' +
+        '</div>' +
+      '</form>';
+
+    overlay.appendChild(content);
+    document.body.appendChild(overlay);
+
+    var ciEl = document.getElementById('bCheckIn');
+    var coEl = document.getElementById('bCheckOut');
+    var inInfo = document.getElementById('bInInfo');
+    var outInfo = document.getElementById('bOutInfo');
+    var today = todayISO();
+    ciEl.min = today;
+
+    function busySet(){
+      var s = {};
+      busyList.forEach(function(d){ s[d] = true; });
+      return s;
+    }
+    function rangeFreeUI(ci, co){
+      if(!ci || !co || co <= ci) return false;
+      var set = busySet();
+      var cur = new Date(ci + 'T00:00:00');
+      var end = new Date(co + 'T00:00:00');
+      while(cur < end){
+        var iso = cur.getFullYear() + '-' + pad(cur.getMonth()+1) + '-' + pad(cur.getDate());
+        if(set[iso]) return false;
+        cur.setDate(cur.getDate() + 1);
+      }
+      return true;
+    }
+
+    function checkDates(){
+      var ci = ciEl.value, co = coEl.value;
+      if(ci && ci < today){
+        inInfo.textContent = 'Дата заезда в прошлом';
+        inInfo.className = 'date-info error';
+      } else if(ci){
+        inInfo.textContent = 'OK';
+        inInfo.className = 'date-info ok';
+        var next = new Date(ci + 'T00:00:00');
+        next.setDate(next.getDate() + 1);
+        coEl.min = next.getFullYear() + '-' + pad(next.getMonth()+1) + '-' + pad(next.getDate());
+      }
+      if(co && ci){
+        if(co <= ci){
+          outInfo.textContent = 'Дата выезда должна быть позже';
+          outInfo.className = 'date-info error';
+        } else if(!rangeFreeUI(ci, co)){
+          outInfo.textContent = 'Период содержит занятые даты';
+          outInfo.className = 'date-info error';
+        } else {
+          outInfo.textContent = 'Период свободен';
+          outInfo.className = 'date-info ok';
+        }
+      }
+    }
+
+    ciEl.addEventListener('change', checkDates);
+    coEl.addEventListener('change', checkDates);
+
+    document.getElementById('bCancel').addEventListener('click', function(){ overlay.remove(); });
+    overlay.addEventListener('click', function(e){ if(e.target === overlay) overlay.remove(); });
+
+    document.getElementById('bookingForm').addEventListener('submit', async function(e){
+      e.preventDefault();
+      var errArea = document.getElementById('bErrorArea');
+      errArea.innerHTML = '';
+      var name = document.getElementById('bGuestName').value.trim();
+      var email = document.getElementById('bGuestEmail').value.trim();
+      var ci = ciEl.value;
+      var co = coEl.value;
+
+      try {
+        await api('/api/bookings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomId: roomId,
+            guestName: name,
+            guestEmail: email,
+            checkIn: ci,
+            checkOut: co
+          })
+        });
+        overlay.remove();
+        showToast('Заявка отправлена! Ожидайте подтверждения.');
+        setMessage('guestMessageArea', 'Заявка отправлена администратору.', 'success');
+        renderRooms();
+      } catch(err) {
+        errArea.innerHTML = '<div class="alert alert-error"><i class="fas fa-exclamation-triangle"></i> ' + escapeHtml(err.message) + '</div>';
+      }
+    });
+  }
+
+  // ========== ФИЛЬТРЫ ==========
+  document.getElementById('searchForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var t = document.getElementById('searchType').value;
+    var mpRaw = document.getElementById('searchMaxPrice').value;
+    var capRaw = document.getElementById('searchCapacity').value;
+    var mp = mpRaw ? parseInt(mpRaw, 10) : null;
+    var cap = capRaw ? parseInt(capRaw, 10) : null;
+
+    if(mp !== null && (isNaN(mp) || mp < 0)){ setMessage('guestMessageArea', 'Цена должна быть положительной', 'error'); return; }
+    if(cap !== null && (isNaN(cap) || cap < 1)){ setMessage('guestMessageArea', 'Гостей должно быть минимум 1', 'error'); return; }
+
+    currentFilter = { type: t, maxPrice: mp, capacity: cap };
+    renderRooms();
+    setMessage('guestMessageArea', 'Фильтр применён', 'success');
+  });
+
+  document.getElementById('resetFilterBtn').addEventListener('click', function(){
+    document.getElementById('searchType').value = '';
+    document.getElementById('searchMaxPrice').value = '';
+    document.getElementById('searchCapacity').value = '';
+    currentFilter = { type:'', maxPrice:null, capacity:null };
+    renderRooms();
+    setMessage('guestMessageArea', 'Фильтры сброшены', 'info');
+  });
+
+  // ========== ТАБЛИЦА ЗАЯВОК ==========
+  async function renderBookingsTable(){
+    var tbody = document.getElementById('bookingsTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#7b8ea3;">Загрузка...</td></tr>';
+
+    var list;
+    try { list = await api('/api/admin/bookings'); }
+    catch(err) {
+      adminLoggedIn = false;
+      updateAdminUI();
+      return;
+    }
+
+    if(list.length === 0){
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#7b8ea3;">Заявок пока нет</td></tr>';
+      return;
+    }
+
+    var html = '';
+    for(var i = 0; i < list.length; i++){
+      var b = list[i];
+      var statusText = '', statusClass = '';
+      if(b.status === 'pending'){ statusText = 'Ожидает'; statusClass = 'status-pending'; }
+      else if(b.status === 'approved'){ statusText = 'Одобрена'; statusClass = 'status-approved'; }
+      else if(b.status === 'rejected'){ statusText = 'Отклонена'; statusClass = 'status-rejected'; }
+
+      var actions = '';
+      if(b.status === 'pending'){
+        actions = '<div class="actions-cell">' +
+          '<button class="btn btn-primary btn-sm approve-btn" data-id="' + b.id + '"><i class="fas fa-check"></i> Одобрить</button>' +
+          '<button class="btn btn-danger btn-sm delete-btn" data-id="' + b.id + '"><i class="fas fa-trash"></i> Удалить</button>' +
+        '</div>';
+      } else {
+        actions = '<div class="actions-cell">' +
+          '<button class="btn btn-danger btn-sm delete-btn" data-id="' + b.id + '"><i class="fas fa-trash"></i> Удалить</button>' +
+        '</div>';
+      }
+
+      html += '<tr>' +
+        '<td>' + b.id + '</td>' +
+        '<td>' + escapeHtml(b.room_title) + '</td>' +
+        '<td>' + escapeHtml(b.guest_name) + '<br><small style="color:#7b8ea3;">' + escapeHtml(b.guest_email) + '</small></td>' +
+        '<td>' + displayDate(b.check_in) + ' — ' + displayDate(b.check_out) + '</td>' +
+        '<td><span class="status-badge ' + statusClass + '">' + statusText + '</span></td>' +
+        '<td>' + actions + '</td>' +
+      '</tr>';
+    }
+    tbody.innerHTML = html;
+
+    tbody.querySelectorAll('.approve-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){ approveBooking(parseInt(this.getAttribute('data-id'), 10)); });
+    });
+    tbody.querySelectorAll('.delete-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){ deleteBooking(parseInt(this.getAttribute('data-id'), 10)); });
+    });
+  }
+
+  async function approveBooking(id){
+    try {
+      await api('/api/admin/bookings/' + id + '/approve', { method: 'POST' });
+      showToast('Заявка №' + id + ' одобрена');
+      setMessage('adminMessageArea', 'Заявка №' + id + ' одобрена. Даты заблокированы.', 'success');
+      renderBookingsTable();
+      renderRooms();
+    } catch(err) {
+      setMessage('adminMessageArea', err.message, 'error');
+      showToast(err.message, true);
+    }
+  }
+
+  async function deleteBooking(id){
+    if(!window.confirm('Удалить заявку №' + id + '?')) return;
+    try {
+      await api('/api/admin/bookings/' + id, { method: 'DELETE' });
+      showToast('Заявка №' + id + ' удалена');
+      setMessage('adminMessageArea', 'Заявка №' + id + ' удалена.', 'info');
+      renderBookingsTable();
+      renderRooms();
+    } catch(err) {
+      setMessage('adminMessageArea', err.message, 'error');
+    }
+  }
+
+  // ========== СТАРТ ==========
+  renderRooms();
+  checkAdmin();
+  guestSection.classList.add('active');
+  adminSection.classList.remove('active');
+})();
+</script>
+</body>
+</html>
